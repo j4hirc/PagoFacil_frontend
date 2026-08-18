@@ -8,7 +8,7 @@ const envConfigFile = `
 export const environment = {
   production: true,
   apiUrl: '${apiUrl}'
-};
+ };
 `;
 
 fs.writeFileSync(targetPath, envConfigFile);

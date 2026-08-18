@@ -1,0 +1,156 @@
+<div class="container my-4">
+
+    <div *ngIf="mensajeExito" class="alert alert-success alert-dismissible fade show" role="alert">
+        <strong>¡Éxito!</strong> {{ mensajeExito }}
+    </div>
+    <div *ngIf="mensajeError" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>¡Atención!</strong> {{ mensajeError }}
+    </div>
+
+    <div class="card shadow mb-4" [ngClass]="editMode ? 'border-warning' : 'border-primary'">
+        <div class="card-header text-white" [ngClass]="editMode ? 'bg-warning text-dark' : 'bg-primary'">
+            <h4 class="mb-0">{{ editMode ? '✏️ Editando Condómino' : '➕ Registrar Nuevo Condómino' }}</h4>
+        </div>
+        <div class="card-body">
+            <form [formGroup]="condominoForm" (ngSubmit)="onSubmit()">
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Cédula:</label>
+                        <input type="text" class="form-control" formControlName="cedulaCondominio"
+                            placeholder="Ej. 0102030405">
+                        <div class="text-danger small mt-1"
+                            *ngIf="condominoForm.get('cedulaCondominio')?.invalid && submitted">
+                            La cédula es obligatoria.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Nombres:</label>
+                        <input type="text" class="form-control" formControlName="nombreCondomino">
+                        <div class="text-danger small mt-1"
+                            *ngIf="condominoForm.get('nombreCondomino')?.invalid && submitted">
+                            El nombre es obligatorio.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Apellidos:</label>
+                        <input type="text" class="form-control" formControlName="apellidoCondomino">
+                        <div class="text-danger small mt-1"
+                            *ngIf="condominoForm.get('apellidoCondomino')?.invalid && submitted">
+                            El apellido es obligatorio.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Celular:</label>
+                        <input type="text" class="form-control" formControlName="celularCondomino">
+                        <div class="text-danger small mt-1"
+                            *ngIf="condominoForm.get('celularCondomino')?.invalid && submitted">
+                            El celular es obligatorio.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Teléfono (Opcional):</label>
+                        <input type="text" class="form-control" formControlName="telefonoCondomino">
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Asignar a Departamento:</label>
+                        <select class="form-select" formControlName="departamentoId">
+                            <option value="" disabled selected>Seleccione un departamento...</option>
+                            <option *ngFor="let d of departamentos" [ngValue]="d.id">
+                                {{ d.numeroDepartamento }} - {{ d.descripcionDepartamento }}
+                            </option>
+                        </select>
+                        <div class="text-danger small mt-1"
+                            *ngIf="condominoForm.get('departamentoId')?.invalid && submitted">
+                            Debe seleccionar un departamento.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 justify-content-end mt-2">
+                    <button type="button" class="btn btn-secondary px-4" *ngIf="editMode" (click)="resetForm()">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn fw-bold px-4"
+                        [ngClass]="editMode ? 'btn-warning text-dark' : 'btn-success'"
+                       >
+                        {{ editMode ? 'Guardar Cambios' : 'Registrar Condómino' }}
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow border-0">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">📋 Listado de Condóminos Registrados</h5>
+            <span class="badge bg-secondary">Total: {{ condominios.length }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="ps-3">ID</th>
+                            <th>Cédula</th>
+                            <th>Propietario</th>
+                            <th>Contacto</th>
+                            <th>Departamento Asignado</th>
+                            <th class="text-center pe-3">Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody *ngIf="cargando">
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Cargando condóminos...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+
+                    <tbody *ngIf="!cargando">
+                        <tr *ngFor="let c of condominios; trackBy: trackByCondominio">
+                            <td class="ps-3 fw-bold">{{ c.id }}</td>
+                            <td>{{ c.cedulaCondominio }}</td>
+                            <td>{{ c.nombreCondomino }} {{ c.apellidoCondomino }}</td>
+                            <td>
+                                <div>📱 {{ c.celularCondomino }}</div>
+                                <div *ngIf="c.telefonoCondomino" class="text-muted small">☎️ {{ c.telefonoCondomino }}
+                                </div>
+                            </td>
+                            <td>
+                                <span *ngIf="c.departamentoId" class="badge bg-info text-dark">
+                                    Dep. {{ c.numeroDepartamento || c.departamentoId }}
+                                </span>
+                                <span *ngIf="!c.departamentoId" class="text-danger small">Sin asignar</span>
+                            </td>
+                            <td class="text-center pe-3">
+                                <button class="btn btn-sm btn-outline-warning me-2 fw-bold" (click)="onEdit(c)">✏️
+                                    Editar</button>
+                                <button class="btn btn-sm btn-outline-danger fw-bold" (click)="onDelete(c.id)">🗑️
+                                    Eliminar</button>
+                            </td>
+                        </tr>
+                        <tr *ngIf="condominios.length === 0">
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <em>No existen condóminos registrados en la base de datos.</em>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,119 @@
+<div class="container my-4">
+
+    <div *ngIf="mensajeExito" class="alert alert-success alert-dismissible fade show" role="alert">
+        <strong>¡Éxito!</strong> {{ mensajeExito }}
+    </div>
+    <div *ngIf="mensajeError" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>¡Atención!</strong> {{ mensajeError }}
+    </div>
+
+    <div class="card shadow mb-4" [ngClass]="editMode ? 'border-warning' : 'border-primary'">
+        <div class="card-header text-white" [ngClass]="editMode ? 'bg-warning text-dark' : 'bg-primary'">
+            <h4 class="mb-0">{{ editMode ? '✏️ Editando Bloque (ID: ' + selectedBloqueId + ')' : '➕ Registrar Nuevo
+                Bloque' }}</h4>
+        </div>
+        <div class="card-body">
+            <form [formGroup]="bloqueForm" (ngSubmit)="onSubmit()">
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Número de Bloque:</label>
+                        <input type="text" class="form-control" formControlName="numeroBloque"
+                            placeholder="Ej. Bloque A">
+                        <div class="text-danger small mt-1"
+                            *ngIf="bloqueForm.get('numeroBloque')?.invalid && bloqueForm.get('numeroBloque')?.touched">
+                            El número de bloque es obligatorio.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Descripción del Bloque:</label>
+                        <input type="text" class="form-control" formControlName="descripcionBloque"
+                            placeholder="Ej. Aulas principales">
+                        <div class="text-danger small mt-1"
+                            *ngIf="bloqueForm.get('descripcionBloque')?.invalid && bloqueForm.get('descripcionBloque')?.touched">
+                            La descripción es obligatoria.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Ubicación:</label>
+                        <input type="text" class="form-control" formControlName="ubicacion"
+                            placeholder="Ej. Zona Norte">
+                        <div class="text-danger small mt-1"
+                            *ngIf="bloqueForm.get('ubicacion')?.invalid && bloqueForm.get('ubicacion')?.touched">
+                            La ubicación es obligatoria.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn btn-secondary px-4" *ngIf="editMode" (click)="resetForm()">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn fw-bold px-4"
+                        [ngClass]="editMode ? 'btn-warning text-dark' : 'btn-success'" [disabled]="bloqueForm.invalid">
+                        {{ editMode ? 'Guardar Cambios' : 'Registrar Bloque' }}
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow border-0">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">📋 Listado de Bloques Registrados</h5>
+            <span class="badge bg-secondary">Total: {{ bloques.length }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="ps-3">ID</th>
+                            <th>Número</th>
+                            <th>Descripción</th>
+                            <th>Ubicación</th>
+                            <th class="text-center pe-3">Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody *ngIf="cargando">
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Cargando datos desde el servidor...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+
+                    <tbody *ngIf="!cargando">
+                        <tr *ngFor="let b of bloques; trackBy: trackByBloque">
+                            <td class="ps-3 fw-bold">{{ b.id }}</td>
+                            <td>{{ b.numeroBloque }}</td>
+                            <td>{{ b.descripcionBloque }}</td>
+                            <td>{{ b.ubicacion }}</td>
+                            <td class="text-center pe-3">
+                                <button class="btn btn-sm btn-outline-warning me-2 fw-bold" (click)="onEdit(b)">
+                                    ✏️ Editar
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger fw-bold" (click)="onDelete(b.id)">
+                                    🗑️ Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                        <tr *ngIf="bloques.length === 0">
+                            <td colspan="5" class="text-center text-muted py-4">
+                                <em>No existen bloques registrados en la base de datos.</em>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

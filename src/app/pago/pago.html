@@ -1,0 +1,150 @@
+<div class="container my-4">
+
+    <div *ngIf="mensajeExito" class="alert alert-success alert-dismissible fade show" role="alert">
+        <strong>¡Éxito!</strong> {{ mensajeExito }}
+    </div>
+    <div *ngIf="mensajeError" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>¡Atención!</strong> {{ mensajeError }}
+    </div>
+
+    <div class="card shadow mb-4" [ngClass]="editMode ? 'border-warning' : 'border-primary'">
+        <div class="card-header text-white" [ngClass]="editMode ? 'bg-warning text-dark' : 'bg-primary'">
+            <h4 class="mb-0">{{ editMode ? '✏️ Editando Pago' : '💸 Registrar Nuevo Pago' }}</h4>
+        </div>
+        <div class="card-body">
+            <form [formGroup]="pagoForm" (ngSubmit)="onSubmit()">
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Fecha de Pago:</label>
+                        <input type="date" class="form-control" formControlName="fechaPago">
+                        <div class="text-danger small mt-1" *ngIf="pagoForm.get('fechaPago')?.invalid && submitted">
+                            La fecha es obligatoria.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Periodo (Año/Mes):</label>
+                        <input type="month" class="form-control" formControlName="anioMesPago">
+                        <div class="text-danger small mt-1" *ngIf="pagoForm.get('anioMesPago')?.invalid && submitted">
+                            El periodo es obligatorio.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Condominio Asociado:</label>
+                        <select class="form-select" formControlName="condominioId">
+                            <option value="" disabled selected>Seleccione un condominio...</option>
+                            <option *ngFor="let c of condominios" [ngValue]="c.id">
+                                {{ c.nombreCondomino || c.cedulaCondominio || ('ID: ' + c.id) }}
+                            </option>
+                        </select>
+                        <div class="text-danger small mt-1" *ngIf="pagoForm.get('condominioId')?.invalid && submitted">
+                            Debe seleccionar un condominio.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Valor Alícuota ($):</label>
+                        <input type="number" step="0.01" min="0" class="form-control"
+                            formControlName="valorPagoAlicuota" placeholder="0.00">
+                        <div class="text-danger small mt-1"
+                            *ngIf="pagoForm.get('valorPagoAlicuota')?.invalid && submitted">
+                            Ingrese un valor válido (mayor o igual a 0).
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Valor Consumo Servicios ($):</label>
+                        <input type="number" step="0.01" min="0" class="form-control"
+                            formControlName="valorPagoConsumoServicios" placeholder="0.00">
+                        <div class="text-danger small mt-1"
+                            *ngIf="pagoForm.get('valorPagoConsumoServicios')?.invalid && submitted">
+                            Ingrese un valor válido (mayor o igual a 0).
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 justify-content-end mt-2">
+                    <button type="button" class="btn btn-secondary px-4" *ngIf="editMode" (click)="resetForm()">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn fw-bold px-4"
+                        [ngClass]="editMode ? 'btn-warning text-dark' : 'btn-success'" [disabled]="cargando">
+                        {{ editMode ? 'Guardar Cambios' : 'Procesar Pago' }}
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow border-0">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">📋 Historial de Pagos Registrados</h5>
+            <span class="badge bg-secondary">Total: {{ pagos.length }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="ps-3">ID</th>
+                            <th>Fecha</th>
+                            <th>Periodo</th>
+                            <th>Alícuota</th>
+                            <th>Servicios</th>
+                            <th>Total Pagado</th>
+                            <th>Condominio</th>
+                            <th class="text-center pe-3">Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody *ngIf="cargando">
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Cargando pagos...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+
+                    <tbody *ngIf="!cargando">
+                        <tr *ngFor="let p of pagos; trackBy: trackByPago">
+                            <td class="ps-3 fw-bold">{{ p.id }}</td>
+                            <td>{{ p.fechaPago }}</td>
+                            <td>{{ p.anioMesPago }}</td>
+                            <td>{{ p.valorPagoAlicuota | currency }}</td>
+                            <td>{{ p.valorPagoConsumoServicios | currency }}</td>
+                            <td class="fw-bold text-success">
+                                {{ (p.valorPagoAlicuota + p.valorPagoConsumoServicios) | currency }}
+                            </td>
+                            <td>
+                                <span *ngIf="p.condominioId" class="badge bg-info text-dark">
+                                    {{ p.nombreCondomino || p.cedulaCondominio || ('ID: ' + p.condominioId) }}
+                                </span>
+                                <span *ngIf="!p.condominioId" class="text-danger small">No asignado</span>
+                            </td>
+                            <td class="text-center pe-3">
+                                <button class="btn btn-sm btn-outline-warning me-2 fw-bold" (click)="onEdit(p)">✏️
+                                    Editar</button>
+                                <button class="btn btn-sm btn-outline-danger fw-bold" (click)="onDelete(p.id)">🗑️
+                                    Eliminar</button>
+                            </td>
+                        </tr>
+                        <tr *ngIf="pagos.length === 0">
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <em>No existen pagos registrados en el historial.</em>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
